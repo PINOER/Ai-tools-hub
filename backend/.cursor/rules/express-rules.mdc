@@ -1,0 +1,30 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: This rule explains Express.js conventions and best practices for Node.js backend development.
+globs: **/*.js,**/*.ts
+alwaysApply: false
+---
+# Express.js rules
+
+- Use proper middleware order: body parsers, custom middleware, routes, error handlers
+- Organize routes using Express Router for modular code structure
+- Use async/await with proper error handling and try/catch blocks
+- Create a centralized error handler middleware as the last middleware
+- Use environment variables for configuration with a config module
+- Implement request validation using libraries like express-validator
+- Use middleware for authentication and authorization
+- Use appropriate HTTP status codes in responses
+- Make sure to transactions in prisma
+- Do not create readme file 
+- Do not create test files , instead directly integrate that. 
+- Reuse the same schemas file.
+- Do not create prisma, import directly from config
+- Make sure to create swagger docs for all routes, along with validator
+- Manage all permissions, and make sure to use the already written middlewares
+- Create service instance in route file and pass to controller
+- Follow layered approach ,call the relevant service for specific module.
+- do not revert the logic just to fix the error, it is highly recommended

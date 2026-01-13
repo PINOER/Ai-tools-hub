@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: always
+    shm_size: 1g
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=ai-tools-hub
+    container_name: ai-tools-hub-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5435:5432'
+    networks:
+      - ai-tool-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    profiles: ["staging"]  # Only run in staging (linode server)
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    container_name: ai-tools-hub-redis
+    ports:
+      - '6379:6379'
+    networks:
+      - ai-tool-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-tool-hub
+    ports:
+      - '5000:5000'
+      - '5555:5555'
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: always
+    networks:
+      - ai-tool-network
+
+volumes:
+  postgres_data:
+
+networks:
+  ai-tool-network:
+    driver: bridge

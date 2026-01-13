@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../ai-tool-hub-backend"
+		},
+		{
+			"path": "../ai-tool-hub-web"
+		}
+	],
+	"settings": {}
+}

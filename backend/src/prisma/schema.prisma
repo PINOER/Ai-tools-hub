@@ -1,0 +1,1102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========== ENUMS ==========
+enum UserStatus {
+  Active
+  Inactive
+  Banned
+  Suspended
+  Deleted
+  Pending
+}
+
+enum ToolStatus {
+  Pending
+  Approved
+  Rejected
+  Deleted
+}
+
+enum PricingModel {
+  Free
+  Paid
+  Freemium
+  Subscription
+  PaidOnly
+  OneTimePurchase
+}
+
+enum PlatformAvailability {
+  Web
+  Desktop
+  MobileApp
+  BrowserExtension
+  Api
+}
+
+enum Visibility {
+  Public
+  Private
+  Unlisted
+  FeaturedOnHomepage
+  IncludeInNewsletter
+}
+
+enum ReviewStatus {
+  Approved
+  PendingReport
+  Reported
+  Flagged
+}
+
+enum ArticleStatus {
+  Draft
+  Published
+  Scheduled
+}
+
+enum LearningStatus {
+  Draft
+  Published
+  Scheduled
+}
+
+enum SkillLevel {
+  Beginner
+  Intermediate
+  Advanced
+}
+
+enum PromptStatus {
+  Draft
+  Published
+  Scheduled
+}
+
+enum BookmarkTargetType {
+  Tool
+  News
+  Article
+  Learning
+  Prompt
+  Glossary
+}
+
+enum NotificationType {
+  System
+  Update
+  Newsletter
+  Review
+  ToolSubmission
+  ToolApproval
+  ToolRejection
+}
+
+enum ImportExportStatus {
+  Pending
+  Processing
+  Completed
+  Failed
+  Cancelled
+}
+
+enum EntityType {
+  Tool
+  Prompt
+  Glossary
+  News
+  Article
+  Learning
+  Category
+  Tag
+}
+
+enum JobType {
+  Import
+  Export
+}
+
+enum RoleType {
+  Admin
+  Moderator
+  User
+  Contributor
+}
+
+enum ClaimStatus {
+  Pending
+  Approved
+  Rejected
+}
+
+enum CategoryType {
+  Primary
+  Secondary
+}
+
+enum GlossaryStatus {
+  Draft
+  Published
+  Scheduled
+}
+
+enum GlossarySource {
+  MANUAL
+  AI
+}
+
+enum Provider {
+  Email
+  Github
+  Facebook
+  Gmail
+}
+
+enum ModerationStatus {
+  Pending
+  Approved
+  Rejected
+}
+
+enum Section {
+  Tool
+  News
+  Article
+  Learning
+  Prompt
+  Glossary
+}
+
+enum Relationship {
+  Creator
+  CEO
+  MarketingManager
+}
+
+// ========== MODELS ==========
+model Role {
+  id    Int      @id @default(autoincrement())
+  role  RoleType @unique
+  users User[]
+}
+
+model User {
+  id               Int        @id @default(autoincrement())
+  username         String     @unique @db.VarChar(255)
+  first_name       String
+  last_name        String
+  email            String? // No @unique - will use Postgres partial index
+  password         String? // Made nullable for social-only users
+  role_id          Int
+  status           UserStatus @default(Active)
+  avatar           String?
+  provider         Provider   @default(Email) // Non-nullable with default Email
+  provider_id      String?
+  access_token     String?
+  bio              String?
+  moderation_notes String?
+  created_at       DateTime   @default(now())
+  updated_at       DateTime   @updatedAt
+
+  role                    Role                     @relation(fields: [role_id], references: [id])
+  tools                   Tool[]
+  reviews                 Review[]
+  toolClaims              ToolClaim[]
+  toolSubmissions         ToolSubmission[]
+  news                    News[]
+  articles                Article[]
+  learnings               Learning[]
+  prompts                 Prompt[]
+  glossaries              GlossaryTerm[]
+  bookmarks               Bookmark[]
+  notifications           Notification[]
+  preferences             UserPreferences?
+  activityLogs            ActivityLog[]
+  apiKeys                 APIKey[]
+  comments                Comment[]
+  votes                   Vote[]
+  passwordResets          PasswordReset[]
+  refreshTokens           RefreshToken[]
+  auditLogs               AuditLog[]
+  moderatedReviews        ReviewModeration[]       @relation("ModeratedReviews")
+  helpful_votes           ReviewHelpfulVote[]
+  reports                 ReviewReport[]
+  glossaryEditSubmissions GlossaryEditSubmission[]
+  toolComparisonSets      ToolComparisonSet[]
+  importExportJobs        ImportExportJob[]
+
+  @@index([username])
+  @@index([email])
+}
+
+model Bookmark {
+  id          Int                @id @default(autoincrement())
+  user_id     Int?
+  target_id   Int
+  target_type BookmarkTargetType
+  created_at  DateTime           @default(now())
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+}
+
+model Tool {
+  id                    Int                    @id @default(autoincrement())
+  avatar                String?
+  name                  String                 @unique
+  short_description     String
+  user_id               Int?
+  is_featured           Boolean                @default(false)
+  is_claimed            Boolean                @default(false)
+  status                ToolStatus             @default(Pending)
+  website_url           String
+  seo_meta_title        String?
+  seo_meta_description  String?
+  pricing_model         PricingModel?
+  free_plan_available   Boolean?               @default(false)
+  free_plan_details     String?
+  paid_plan_details     String?
+  platform_availability PlatformAvailability[]
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  full_description      String?
+  use_cases             String[]
+  features              String[]
+  screenshots           String[]
+  is_unique             Boolean
+
+  embedding        Unsupported("vector")?
+  user             User?                  @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  tool_claims      ToolClaim[]
+  tool_submissions ToolSubmission[]
+  reviews          Review[]
+  tool_tags        ToolTag[]
+  social_links     SocialLink[]
+  comparison_tools ToolComparisonTool[]
+  tool_categories  ToolCategory[]         @relation("tool_categories")
+  tool_roles       ToolRole[]             @relation("ToolRoles")
+  tool_industries  ToolIndustry[]         @relation("ToolIndustries")
+}
+
+model ToolClaim {
+  id                     Int          @id @default(autoincrement())
+  tool_id                Int
+  claimant_id            Int?
+  status                 ClaimStatus  @default(Pending)
+  review_notes           String?
+  full_name              String
+  job                    String
+  company_email          String
+  phone                  String
+  relationship           Relationship
+  company_website        String
+  tool_website           String?
+  company_image          String
+  professional_profile   String
+  additional_information String
+  created_at             DateTime     @default(now())
+  updated_at             DateTime     @updatedAt
+
+  tool Tool  @relation(fields: [tool_id], references: [id])
+  user User? @relation(fields: [claimant_id], references: [id], onDelete: SetNull)
+}
+
+model ToolSubmission {
+  id             Int         @id @default(autoincrement())
+  user_id        Int?
+  tool_id        Int
+  status         ClaimStatus @default(Pending)
+  internal_notes String?
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  tool Tool  @relation(fields: [tool_id], references: [id])
+}
+
+model ToolTag {
+  tool_id Int
+  tag_id  Int
+
+  tool Tool @relation(fields: [tool_id], references: [id])
+  tag  Tag  @relation(fields: [tag_id], references: [id])
+
+  @@id([tool_id, tag_id])
+}
+
+model ToolCategory {
+  id          Int          @id @default(autoincrement())
+  tool_id     Int
+  category_id Int
+  type        CategoryType
+
+  tool     Tool     @relation("tool_categories", fields: [tool_id], references: [id])
+  category Category @relation(fields: [category_id], references: [id])
+}
+
+model NewsTag {
+  news_id Int
+  tag_id  Int
+
+  news News @relation(fields: [news_id], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tag_id], references: [id])
+
+  @@id([news_id, tag_id])
+}
+
+model ArticleTag {
+  article_id Int
+  tag_id     Int
+
+  article Article @relation(fields: [article_id], references: [id])
+  tag     Tag     @relation(fields: [tag_id], references: [id])
+
+  @@id([article_id, tag_id])
+}
+
+model GlossaryTag {
+  glossary_id Int
+  tag_id      Int
+
+  glossary GlossaryTerm @relation(fields: [glossary_id], references: [id])
+  tag      Tag          @relation(fields: [tag_id], references: [id])
+
+  @@id([glossary_id, tag_id])
+}
+
+model LearningTag {
+  learning_id Int
+  tag_id      Int
+
+  learning Learning @relation(fields: [learning_id], references: [id])
+  tag      Tag      @relation(fields: [tag_id], references: [id])
+
+  @@id([learning_id, tag_id])
+}
+
+model PromptTag {
+  prompt_id Int
+  tag_id    Int
+
+  prompt Prompt @relation(fields: [prompt_id], references: [id])
+  tag    Tag    @relation(fields: [tag_id], references: [id])
+
+  @@id([prompt_id, tag_id])
+}
+
+model News {
+  id                Int              @id @default(autoincrement())
+  headline          String
+  seo_title         String?
+  url_slug          String           @unique
+  content           String
+  image             String?
+  user_id           Int?
+  is_featured       Boolean          @default(false)
+  status            ArticleStatus    @default(Draft)
+  moderation_status ModerationStatus @default(Pending)
+  published_date    DateTime?
+  published_time    String?
+  visibility        Visibility       @default(Public)
+  allow_comments    Boolean          @default(false)
+
+  embedding      Unsupported("vector")?
+  user           User?                  @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  newsTags       NewsTag[]
+  newsCategories NewsCategory[]
+}
+
+model Article {
+  id                Int              @id @default(autoincrement())
+  headline          String
+  url_slug          String
+  content           String
+  image             String?
+  user_id           Int?
+  is_featured       Boolean          @default(false)
+  status            ArticleStatus    @default(Draft)
+  moderation_status ModerationStatus @default(Pending)
+  published_date    DateTime?
+  published_time    String?
+  visibility        Visibility       @default(Public)
+  allow_comments    Boolean          @default(false)
+
+  embedding         Unsupported("vector")?
+  user              User?                  @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  articleTags       ArticleTag[]
+  articleCategories ArticleCategory[]
+}
+
+model Learning {
+  id                Int              @id @default(autoincrement())
+  title             String
+  url_slug          String
+  description       String?
+  image             String
+  user_id           Int?
+  is_featured       Boolean          @default(false)
+  status            LearningStatus   @default(Draft)
+  moderation_status ModerationStatus @default(Pending)
+  skill_level       SkillLevel
+  lesson_link       String
+  published_date    DateTime?
+  published_time    String?
+  visibility        Visibility       @default(Public)
+  allow_comments    Boolean          @default(false)
+
+  embedding          Unsupported("vector")?
+  user               User?                  @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  learningTags       LearningTag[]
+  learningCategories LearningCategory[]
+}
+
+model Prompt {
+  id                Int              @id @default(autoincrement())
+  title             String
+  url_slug          String
+  user_id           Int?
+  is_featured       Boolean          @default(false)
+  status            PromptStatus     @default(Draft)
+  moderation_status ModerationStatus @default(Pending)
+  ai_models         String[]
+  short_description String?
+  main_prompt       String
+  user_guide        String?
+  published_date    DateTime?
+  published_time    String?
+  moderation_notes  String?
+  allow_comments    Boolean          @default(false)
+
+  embedding        Unsupported("vector")?
+  user             User?                  @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  promptTags       PromptTag[]
+  promptChains     PromptChain[]
+  votes            Vote[]
+  promptCategories PromptCategory[]
+}
+
+model PromptCategory {
+  id          Int          @id @default(autoincrement())
+  prompt_id   Int
+  category_id Int
+  type        CategoryType
+
+  prompt   Prompt   @relation(fields: [prompt_id], references: [id])
+  category Category @relation(fields: [category_id], references: [id])
+}
+
+model PromptChain {
+  id               Int    @id @default(autoincrement())
+  prompt_id        Int
+  part_number      Int
+  step_title       String
+  step_description String
+  text             String
+
+  prompt Prompt @relation(fields: [prompt_id], references: [id])
+}
+
+model Event {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  event_date  DateTime?
+  approved    Boolean   @default(false)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+}
+
+model Category {
+  id                     Int                    @id @default(autoincrement())
+  section                Section
+  name                   String
+  url_slug               String                 @unique
+  description            String?
+  display_order          Int?
+  seo_title              String?
+  parent_category        Category?              @relation("CategoryToParent", fields: [parentCategoryId], references: [id])
+  parentCategoryId       Int?
+  subcategories          Category[]             @relation("CategoryToParent")
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  tool_categories        ToolCategory[]
+  promptCategories       PromptCategory[]
+  newsCategories         NewsCategory[]
+  articleCategories      ArticleCategory[]
+  learningCategories     LearningCategory[]
+  glossaryTermCategories GlossaryTermCategory[]
+}
+
+model Tag {
+  id         Int      @id @default(autoincrement())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  tool_tags    ToolTag[]
+  newsTags     NewsTag[]
+  articleTags  ArticleTag[]
+  glossaryTags GlossaryTag[]
+  learningTags LearningTag[]
+  promptTags   PromptTag[]
+}
+
+model Review {
+  id             Int          @id @default(autoincrement())
+  user_id        Int?
+  tool_id        Int
+  overall_rating Float
+  comment        String
+  helpful_count  Int          @default(0)
+  status         ReviewStatus @default(Approved)
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+
+  user          User?               @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  tool          Tool                @relation(fields: [tool_id], references: [id])
+  moderations   ReviewModeration[]
+  criteria      ReviewCriteria[]
+  helpful_votes ReviewHelpfulVote[]
+  reports       ReviewReport[]
+}
+
+model ReviewCriteria {
+  id        Int    @id @default(autoincrement())
+  name      String
+  rating    Int
+  comment   String
+  review_id Int
+  review    Review @relation(fields: [review_id], references: [id], onDelete: Cascade)
+}
+
+model ReviewModeration {
+  id           Int      @id @default(autoincrement())
+  review_id    Int
+  remarks      String
+  moderator_id Int?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  review    Review @relation(fields: [review_id], references: [id], onDelete: Cascade)
+  moderator User?  @relation(fields: [moderator_id], references: [id], name: "ModeratedReviews", onDelete: SetNull)
+}
+
+model ReviewHelpfulVote {
+  id        Int  @id @default(autoincrement())
+  user_id   Int?
+  review_id Int
+
+  user   User?  @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  review Review @relation(fields: [review_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, review_id])
+}
+
+model ReviewReport {
+  id         Int      @id @default(autoincrement())
+  review_id  Int
+  user_id    Int?
+  reason     String
+  created_at DateTime @default(now())
+
+  review Review @relation(fields: [review_id], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [user_id], references: [id], onDelete: SetNull)
+}
+
+enum NewsletterFrequency {
+  Daily
+  Weekly
+  Monthly
+  Custom
+}
+
+enum WeekDay {
+  Monday
+  Tuesday
+  Wednesday
+  Thursday
+  Friday
+  Saturday
+  Sunday
+}
+
+enum SendMode {
+  Automatic
+  Approval
+}
+
+enum NewsletterTemplateContent {
+  AI_NEWSLETTER_OVERVIEW
+  TOP_TOOLS_WEEK
+  TOP_ARTICLES_WEEK
+  FEATURED_LEARNING_CONTENT
+  AI_NEWS
+}
+
+enum FallbackContent {
+  SHOW_POPULAR_TOOLS
+  INCLUDE_TRENDING_CONTENT
+}
+
+enum NewsletterStatus {
+  Draft
+  Scheduled
+  Sent
+  Failed
+  Cancelled
+}
+
+enum SiteStatus {
+  Live
+  Maintenance
+}
+
+enum ReviewApprovalStatus {
+  AutoPublish
+  AdminApproval
+}
+
+enum SubmissionApprovalStatus {
+  AutoApprove
+  AdminApproval
+}
+
+enum EmailServiceProvider {
+  SMTP
+  SendGrid
+  Mailgun
+  AmazonSES
+}
+
+enum EmailNotificationType {
+  ToolSubmission
+  ArticleSubmission
+  LearningSubmission
+  FlaggedContentReport
+  NewUserRegistration
+}
+
+enum SitemapSetting {
+  Tools
+  Users
+  Articles
+  Learning
+  News
+}
+
+model Newsletter {
+  id            Int                       @id @default(autoincrement())
+  subject       String
+  template      String
+  frequency     NewsletterFrequency       @default(Daily)
+  send_day      WeekDay?
+  send_time     DateTime? // time of day
+  start_date    DateTime? // 👈 campaign start date
+  status        NewsletterStatus          @default(Draft) // 👈 lifecycle status
+  is_enabled    Boolean                   @default(true) // 👈 enable/disable campaign
+  send_mode     SendMode                  @default(Automatic)
+  template_type NewsletterTemplateContent @default(AI_NEWSLETTER_OVERVIEW)
+  fallback_type FallbackContent           @default(SHOW_POPULAR_TOOLS)
+  created_at    DateTime                  @default(now())
+  updated_at    DateTime                  @updatedAt
+
+  engagements NewsletterEngagement[]
+}
+
+model NewsletterEngagement {
+  id            Int      @id @default(autoincrement())
+  newsletter_id Int
+  opened        Boolean  @default(false)
+  clicked       Boolean  @default(false)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  newsletter Newsletter @relation(fields: [newsletter_id], references: [id])
+}
+
+model FormField {
+  id         Int      @id @default(autoincrement())
+  label      String
+  type       String
+  type_id    Int?
+  required   Boolean  @default(false)
+  position   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model EmailTemplate {
+  id         Int      @id @default(autoincrement())
+  name       String
+  content    String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  user_id     Int?
+  action      String
+  entity_type String
+  entity_id   Int
+  old_values  Json?
+  new_values  Json?
+  ip_address  String?
+  created_at  DateTime @default(now())
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+}
+
+model GlossaryTerm {
+  id                Int              @id @default(autoincrement())
+  term              String
+  definition        String
+  status            GlossaryStatus   @default(Draft)
+  moderation_status ModerationStatus @default(Pending)
+  source            GlossarySource   @default(MANUAL)
+  is_featured       Boolean          @default(false)
+  allow_comments    Boolean          @default(false)
+  created_at        DateTime         @default(now())
+  updated_at        DateTime         @updatedAt
+  user_id           Int?
+
+  embedding           Unsupported("vector")?
+  user                User?                    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  glossary_categories GlossaryTermCategory[]
+  glossaryTags        GlossaryTag[]
+  editSubmissions     GlossaryEditSubmission[] @relation("GlossaryTermToEditSubmissions")
+  relatedTerms        GlossaryTermRelation[]   @relation("TermToRelated")
+  relatedTo           GlossaryTermRelation[]   @relation("RelatedToTerm")
+}
+
+model GlossaryTermCategory {
+  id               Int          @id @default(autoincrement())
+  glossary_term_id Int
+  category_id      Int
+  type             CategoryType
+
+  glossaryTerm GlossaryTerm @relation(fields: [glossary_term_id], references: [id])
+  category     Category     @relation(fields: [category_id], references: [id])
+
+  @@index([glossary_term_id])
+  @@index([category_id])
+}
+
+model GlossaryTermRelation {
+  id         Int @id @default(autoincrement())
+  term_id    Int
+  related_id Int
+
+  term    GlossaryTerm @relation("TermToRelated", fields: [term_id], references: [id])
+  related GlossaryTerm @relation("RelatedToTerm", fields: [related_id], references: [id])
+
+  @@index([term_id])
+  @@index([related_id])
+}
+
+model GlossaryEditSubmission {
+  id               Int              @id @default(autoincrement())
+  glossary_term_id Int
+  term             String // edited term value
+  definition       String // edited definition
+  status           ModerationStatus @default(Pending)
+  admin_comment    String?
+  user_id          Int?
+  created_at       DateTime         @default(now())
+
+  glossaryTerm GlossaryTerm @relation("GlossaryTermToEditSubmissions", fields: [glossary_term_id], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([glossary_term_id])
+}
+
+model SocialLink {
+  id         Int      @id @default(autoincrement())
+  tool_id    Int
+  platform   String
+  url        String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  tool Tool @relation(fields: [tool_id], references: [id])
+}
+
+model ToolComparisonSet {
+  id         Int      @id @default(autoincrement())
+  user_id    Int?
+  name       String
+  slug       String?  @unique
+  is_shared  Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user  User?                @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  tools ToolComparisonTool[]
+}
+
+model ToolComparisonTool {
+  id                Int @id @default(autoincrement())
+  tool_id           Int
+  comparison_set_id Int
+
+  tool          Tool              @relation(fields: [tool_id], references: [id])
+  comparisonSet ToolComparisonSet @relation(fields: [comparison_set_id], references: [id])
+
+  @@unique([tool_id, comparison_set_id])
+}
+
+model Notification {
+  id      Int              @id @default(autoincrement())
+  user_id Int?
+  type    NotificationType
+  title   String
+  message String
+  read    Boolean          @default(false)
+
+  // Navigation and entity reference
+  action_url  String? // URL to navigate when notification is clicked (e.g., "/tools/123")
+  entity_type String? // Type of related entity (tool, article, news, etc.)
+  entity_id   Int? // ID of the related entity
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([entity_type, entity_id])
+}
+
+model UserPreferences {
+  id                    Int      @id @default(autoincrement())
+  user_id               Int?     @unique
+  newsletter_subscribed Boolean  @default(true)
+  email_notifications   Boolean  @default(true)
+  search_alerts         Boolean  @default(true)
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+}
+
+model APIKey {
+  id          Int       @id @default(autoincrement())
+  user_id     Int?
+  key_hash    String
+  name        String
+  permissions String
+  rate_limit  Int
+  active      Boolean   @default(true)
+  last_used   DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+}
+
+model Comment {
+  id         Int           @id @default(autoincrement())
+  content    String
+  user_id    Int?
+  status     CommentStatus @default(PENDING)
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+
+  // Content type and ID for polymorphic relationship
+  content_type CommentContentType
+  content_id   Int
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FLAGGED
+}
+
+enum CommentContentType {
+  TOOL
+  NEWS
+  ARTICLE
+  LEARNING
+  PROMPT
+  GLOSSARY
+}
+
+model Vote {
+  id         Int      @id @default(autoincrement())
+  user_id    Int?
+  prompt_id  Int
+  vote_type  String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user   User?  @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  prompt Prompt @relation(fields: [prompt_id], references: [id])
+}
+
+model PasswordReset {
+  id         Int      @id @default(autoincrement())
+  user_id    Int?
+  token      String
+  expires_at DateTime
+  used       Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model NewsCategory {
+  id          Int          @id @default(autoincrement())
+  news_id     Int
+  category_id Int
+  type        CategoryType
+
+  news     News     @relation(fields: [news_id], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [category_id], references: [id])
+
+  @@unique([news_id, category_id])
+}
+
+model ArticleCategory {
+  id          Int          @id @default(autoincrement())
+  article_id  Int
+  category_id Int
+  type        CategoryType
+
+  article  Article  @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [category_id], references: [id])
+
+  @@unique([article_id, category_id])
+}
+
+model LearningCategory {
+  id          Int          @id @default(autoincrement())
+  learning_id Int
+  category_id Int
+  type        CategoryType
+
+  learning Learning @relation(fields: [learning_id], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [category_id], references: [id])
+
+  @@unique([learning_id, category_id])
+}
+
+model ToolRole {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  tools     Tool[]   @relation("ToolRoles")
+  createdAt DateTime @default(now())
+}
+
+model ToolIndustry {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  tools     Tool[]   @relation("ToolIndustries")
+  createdAt DateTime @default(now())
+}
+
+// ========== IMPORT/EXPORT MODELS ==========
+model ImportExportJob {
+  id            String             @id @default(cuid())
+  entityType    EntityType
+  jobType       JobType
+  fileName      String?
+  filePath      String?
+  totalRows     Int                @default(0)
+  processedRows Int                @default(0)
+  successCount  Int                @default(0)
+  errorCount    Int                @default(0)
+  status        ImportExportStatus @default(Pending)
+  errorLogs     String? // JSON string containing error details
+  metadata      Json?
+  startedAt     DateTime           @default(now())
+  completedAt   DateTime?
+  adminId       Int
+
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([status])
+  @@index([entityType])
+  @@index([startedAt])
+}
+
+model ActivityLog {
+  id           Int      @id @default(autoincrement())
+  title        String // "New Tool Submission", "Review Completed", etc.
+  description  String // "ChatGPT Pro submitted for review"
+  icon         String? // "🛠️", "⭐", "📰", etc.
+  user_id      Int?
+  reference_id Int? // ID of the related entity (tool, article, etc.)
+  entity_type  String? // Type of the referenced entity
+  entity_name  String? // Name/title of the referenced entity
+  metadata     Json? // Additional details (status, description, etc.)
+  created_at   DateTime @default(now())
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([created_at])
+  @@index([user_id])
+}
+
+model SiteInformation {
+  id                                 Int                      @id @default(autoincrement())
+  site_name                          String
+  site_description                   String
+  site_tagline                       String
+  status                             SiteStatus               @default(Live)
+  maintenance_message                String?
+  favicon                            String?
+  social_preview                     String?
+  meta_title                         String?
+  meta_description                   String?
+  sitemap_settings                   SitemapSetting[]         @default([])
+  google_search_console_verification String?
+  bing_webmaster_tools_verification  String?
+  twitter_url                        String?
+  github_url                         String?
+  linkedin_url                       String?
+  youtube_url                        String?
+  google_analytics_id                String?
+  google_tag_manager_id              String?
+  facebook_pixel_id                  String?
+  review_status                      Boolean                  @default(true)
+  review_approval                    ReviewApprovalStatus     @default(AutoPublish)
+  min_review_length                  Int                      @default(10)
+  max_review_length                  Int                      @default(500)
+  tool_submission_approval           SubmissionApprovalStatus @default(AdminApproval)
+  article_submission_approval        SubmissionApprovalStatus @default(AdminApproval)
+  learning_submission_approval       SubmissionApprovalStatus @default(AdminApproval)
+  admin_notification_email           String?
+  notify_admins_for                  EmailNotificationType[]  @default([])
+  email_service_provider             EmailServiceProvider     @default(SMTP)
+  smtp_host                          String?
+  smtp_port                          Int?
+  smtp_username                      String?
+  smtp_password                      String?
+  from_email                         String?
+  from_name                          String?
+  created_at                         DateTime                 @default(now())
+  updated_at                         DateTime                 @updatedAt
+
+  @@map("site_information")
+}

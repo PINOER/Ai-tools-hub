@@ -1,0 +1,12 @@
+export { default as HomeIcon } from './HomeIcon';
+export { default as PersonIcon } from './PersonIcon';
+export { default as ToolsIcon } from './ToolsIcon';
+export { default as ArticleIcon } from './ArticleIcon';
+export { default as CategoriesIcon } from './CategoriesIcon';
+export { default as GlossaryIcon } from './GlossaryIcon';
+export { default as LearningIcon } from './LearningIcon';
+export { default as NewsIcon } from './NewsIcon';
+export { default as NewsletterIcon } from './NewsletterIcon';
+export { default as PromptsIcon } from './PromptsIcon';
+export { default as ReviewsIcon } from './ReviewsIcon';
+export { default as SubmissionsIcon } from './SubmissionsIcon'; 

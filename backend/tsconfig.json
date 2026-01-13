@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "skipLibCheck": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "moduleResolution": "nodenext",
+    "esModuleInterop": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "typeRoots": ["./types", "./node_modules/@types"],
+    "baseUrl": "./src",
+    "paths": {
+      "@features/*": ["features/*"],
+      "@config/*": ["config/*"],
+      "@utils/*": ["utils/*"],
+      "@middleware/*": ["middleware/*"],
+      "@types/*": ["types/*"],
+      "@docs/*": ["docs/*"]
+    }
+  }
+}

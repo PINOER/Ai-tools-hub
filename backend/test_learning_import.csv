@@ -1,0 +1,5 @@
+title,description,url_slug,status,skill_level,published_date,published_time,is_featured,category_name,secondary_category_names,tags
+"Introduction to AI Tools","Learn the fundamentals of AI tools and how they can transform your workflow. This course covers basic concepts, popular tools, and practical applications.","introduction-to-ai-tools",Published,Beginner,2024-01-10,10:00:00,true,Education,AI Tools;Productivity,"AI;Learning;Tutorial"
+"Advanced Prompt Engineering","Master the art of prompt engineering to get the best results from AI language models. Learn advanced techniques and strategies including chain-of-thought prompting and few-shot learning.","advanced-prompt-engineering",Published,Advanced,2024-01-15,14:30:00,false,AI Tools,Education;Productivity,"Prompt Engineering;AI;Advanced"
+"Building AI Applications","Learn how to build real-world AI applications using modern tools and frameworks. Hands-on projects included covering AI APIs, integration patterns, and deployment strategies.","building-ai-applications",Draft,Intermediate,2024-01-20,09:00:00,false,Developer Tools,AI Tools;Technology,"AI Development;Programming;Applications"
+

@@ -1,0 +1,60 @@
+---
+alwaysApply: true
+---
+
+# 🧠 Cursor React Project Guidelines
+
+This project is built with React and structured for scalability and maintainability. Below are the standards and conventions to follow across all modules:
+
+## ✅ Project Structure & Best Practices
+
+### 1. ♻️ Reusable Components
+
+- **Generic UI Components**:  
+  - Always use shared generic components (like `DataTable`, `Filters`, `Pagination`) where applicable.  
+  - Avoid duplicating logic/UI between modules.
+
+### 2. 🧩 Modular Hooks
+
+- For **each module**, create a dedicated folder under `src/hooks/<ModuleName>`.
+- Define custom hooks like `use<ModuleName>Filters`, `use<ModuleName>List`, etc., to encapsulate business logic.
+- **Do not call APIs directly** inside components.
+
+### 3. 📡 API Calls with React Query
+
+- Use [`useQuery`](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery) and [`useMutation`] from **React Query** for all API interactions.
+- Place API functions under `src/services/<ModuleName>.ts` and consume them inside custom hooks only.
+
+### 4. 🔒 Auth & Token Handling
+
+- Never manually pass tokens in API calls.
+- Use the pre-configured `apiClient` instance which automatically handles token injection.
+
+### 5. 🧠 Follow the AITools Module Pattern
+
+- Use the **AITools** module as a reference implementation.
+  - It follows best practices for structure, API integration, filtering, table usage, and state handling.
+  - Maintain similar folder structure, naming conventions, and flow across all new modules.
+
+### 6. 📄 API Interface & Response Handling
+
+- For all paginated APIs:
+  - Create strongly typed **interfaces** for both the data items and the pagination metadata in the respective `src/services/<ModuleName>.ts` file.
+- Always return only `response.data` from the service layer.
+- In your custom `useQuery` hook, structure the return value so that components can easily access:
+  
+  ```ts
+  const usersData = useUsersQuery();
+
+  usersData.users;        // list of items
+  usersData.pagination;   // pagination info
+
+
+7. 🖼️ Image Upload Handling
+All image files must be uploaded to S3 (or the configured cloud storage) before or during form submission.
+
+Only the resulting image URLs should be included in the final API request body.
+
+Do not send raw files or base64 blobs.
+
+Use a shared utility or reusable uploader component to handle this consistently across modules.

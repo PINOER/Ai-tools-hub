@@ -1,0 +1,58 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/toolUi/dialog';
+
+interface DialogContainerProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string | null;
+  children: any;
+  maxWidth: string;
+  resetOnClose?: boolean;
+  resetAll?: () => void;
+}
+
+const DialogContainer = ({
+  open,
+  onOpenChange,
+  title,
+  children,
+  resetOnClose = false,
+  resetAll,
+}: DialogContainerProps) => {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className={`md:max-w-4xl  max-h-[90vh] overflow-y-auto  p-0 [&>button]:hidden`}
+      >
+        <DialogHeader>
+          {title !== null ? (
+            <DialogTitle className='flex px-6 py-4 justify-between items-center text-[27px] font-medium text-[#00000033] font-[inter]'>
+              {title}
+              <svg
+                width='16'
+                height='16'
+                viewBox='0 0 16 16'
+                fill='none'
+                xmlns='http://www.w3.org/2000/svg'
+                className='cursor-pointer'
+                onClick={() => {
+                  onOpenChange(false);
+                  // @ts-ignore
+                  if (resetOnClose) resetAll();
+                }}
+              >
+                <path
+                  d='M0.322681 15.677C0.177061 15.5379 0.0810839 15.3723 0.0347502 15.1801C-0.0115834 14.988 -0.0115834 14.7959 0.0347502 14.6037C0.087703 14.4116 0.18368 14.2493 0.322681 14.1168L6.41886 7.99503L0.322681 1.88323C0.18368 1.75072 0.0910125 1.58841 0.0446789 1.39627C-0.00165477 1.20414 -0.00165477 1.01201 0.0446789 0.819876C0.0910125 0.627743 0.18368 0.462112 0.322681 0.322981C0.468301 0.177226 0.637088 0.0811594 0.829041 0.0347826C1.02099 -0.0115942 1.21295 -0.0115942 1.4049 0.0347826C1.59686 0.0811594 1.76233 0.173913 1.90133 0.313043L8.00745 6.42484L14.1036 0.313043C14.2426 0.167288 14.4081 0.0745342 14.6001 0.0347826C14.792 -0.0115942 14.9807 -0.0115942 15.166 0.0347826C15.3579 0.0811594 15.53 0.177226 15.6823 0.322981C15.8213 0.462112 15.914 0.627743 15.9603 0.819876C16.0132 1.01201 16.0132 1.20414 15.9603 1.39627C15.914 1.58178 15.8213 1.74741 15.6823 1.89317L9.5861 7.99503L15.6823 14.1068C15.8213 14.2526 15.914 14.4215 15.9603 14.6137C16.0066 14.7992 16.0066 14.988 15.9603 15.1801C15.914 15.3723 15.8213 15.5379 15.6823 15.677C15.5367 15.8228 15.3679 15.9188 15.1759 15.9652C14.984 16.0116 14.792 16.0116 14.6001 15.9652C14.4081 15.9188 14.2426 15.8261 14.1036 15.687L8.00745 9.57516L1.90133 15.687C1.76233 15.8261 1.59686 15.9188 1.4049 15.9652C1.21957 16.0116 1.02761 16.0116 0.829041 15.9652C0.637088 15.9188 0.468301 15.8228 0.322681 15.677Z'
+                  fill='black'
+                  fillOpacity='0.2'
+                />
+              </svg>
+            </DialogTitle>
+          ) : null}
+        </DialogHeader>
+        {children}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default DialogContainer;
