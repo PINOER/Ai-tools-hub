@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   images: {
+    unoptimized: true, // 🌟 精准加在这里：确保能在 Cloudflare 上完美跑通，不报优化错误
     domains: [  
       'cdn.pixabay.com',
       'api.getprixite.com',
@@ -22,10 +23,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-
-const nextConfig = {
-  images: {
-    unoptimized: true, // 极其重要：禁用 Next.js 默认图片优化，改用浏览器原生渲染
-  }
-};
-module.exports = nextConfig;
