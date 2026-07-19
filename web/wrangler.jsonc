@@ -1,0 +1,8 @@
+{
+  "name": "ai-tools-hub-web",
+  "compatibility_date": "2026-05-01",
+  "compatibility_flags": [
+    "nodejs_compat" // 极为关键：允许 Next.js 在边缘调用基础 Node 模块
+  ],
+  "pages_build_output_dir": ".vercel/output/static"
+}
