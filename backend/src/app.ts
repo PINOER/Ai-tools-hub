@@ -31,6 +31,13 @@ app.use(helmet());
 // app.use(config.limiter);
 app.use(responseFormatter);
 
+const allowedOrigins = [
+  'https://helpmini.com',        // 你的前端主域名
+  'https://admin.helpmini.com',  // 你的管理后台域名
+  'http://localhost:3000',       // 保留本地调试端口
+  'http://localhost:5173'
+];
+
 // Ensure uploads/imports directory exists
 const uploadsDir = path.join(process.cwd(), 'uploads', 'imports');
 if (!fs.existsSync(uploadsDir)) {
@@ -81,3 +88,17 @@ app.listen(config.port, () => {
   logger.info(`Server is running on ${process.env.BASE_URL}/`);
   logger.info(`Docs at ${process.env.BASE_URL}/docs`);
 });
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'CORS 策略不允许该域名访问。';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true, // 允许跨域携带 Cookie/Token
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
